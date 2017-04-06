@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[4]:
+# In[9]:
 
 import errno
 import json
@@ -15,6 +15,7 @@ import pandas as pd
 import scipy.misc
 from scipy.ndimage import rotate
 from scipy.stats import bernoulli
+from sklearn.model_selection import train_test_split
 
 # Some useful constants
 DRIVING_LOG_FILE = './data/driving_log.csv'
@@ -22,15 +23,20 @@ IMG_PATH = './data/'
 STEERING_COEFFICIENT = 0.229
 
 class DataProvider():
-    
     def __init__(self, hxrate=.35,lxrate=.1,nshape=(64,64),shrange=200,flrate=.5,rotrate=15,shrate=.9):
-        self.hxrate = hxrate
-        self.lxrate = lxrate
-        self.nshape = nshape
-        self.shrange = shrange
-        self.flrate = flrate
-        self.rotrate = rotrate
-        self.shrate = shrate
+             
+        self.hxrate, self.lxrate,self.nshape,self.shrange,self.flrate,self.rotrate,self.shrate =                                     hxrate,lxrate,nshape,shrange,flrate,rotrate,shrate
+        
+        try :
+            data = pd.read_csv(DRIVING_LOG_FILE)
+            self.train, self.validation = train_test_split(data, test_size=0.2)
+            self.train_length = len(self.train) * 3
+            self.validation_length = len(self.validation) * 3
+            print('Length Train :',self.train_length)
+            print('Length Validation :',self.validation_length)
+        except :
+            print('Can not load data from csv file...')
+        
     
     def save(self, image, path):
         ts = time.time()
@@ -103,8 +109,14 @@ class DataProvider():
         return image, steering_angle
 
 
-    def loadata(self,batch_size=64):
-        data = pd.read_csv(DRIVING_LOG_FILE)
+    def loadata(self,batch_size=64,spltype='train'):
+        nbsamples = 0
+        
+        if spltype == 'train'  :
+            data = self.train
+        if spltype == 'valid':
+            data = self.validation
+            
         nbsamples = len(data)
         indices = np.random.randint(0, nbsamples, batch_size)
 
@@ -128,11 +140,11 @@ class DataProvider():
         return samples
 
 
-    def getbatch(self,batch_size=64):
+    def getbatch(self,batch_size=64,spltype='train'):
         while True:
             X_batch = []
             y_batch = []
-            samples = self.loadata(batch_size)
+            samples = self.loadata(batch_size,spltype)
             for img_file, angle in samples:
                 raw_image = plt.imread(IMG_PATH + img_file)
                 raw_angle = angle

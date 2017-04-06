@@ -23,7 +23,7 @@ sio = socketio.Server()
 app = Flask(__name__)
 model = None
 dp = DataProvider.DataProvider()
-
+vidfolder = None
 def crop(image, top_cropping_percent):
     assert 0 <= top_cropping_percent < 1.0, 'top_cropping_percent should be between zero and one'
     percent = int(np.ceil(image.shape[0] * top_cropping_percent))
@@ -45,7 +45,7 @@ def telemetry(sid, data):
     imgString = data["image"]
     image = Image.open(BytesIO(base64.b64decode(imgString)))
     image_array = np.asarray(image)
-    dp.save(image_array,'/run1/')
+    dp.save(image_array,'/run1')
     image_array = dp.crop(image_array)
     image_array = dp.resize(image_array)
 
@@ -104,6 +104,7 @@ if __name__ == '__main__':
 
     if args.image_folder != '':
         print("Creating image folder at {}".format(args.image_folder))
+        
         if not os.path.exists(args.image_folder):
             os.makedirs(args.image_folder)
         else:
